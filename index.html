@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#11131a" />
+  <meta name="description" content="Agente ia" />
+  <title>Wlciav01 — WLC.IA</title>
+  <link rel="icon" href="public/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="src/styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar" aria-label="Conversas">
+      <div class="sidebar-top"><a class="brand" href="#" aria-label="WLC.IA"><span class="brand-mark">W</span><span>WLC<span class="brand-dot">.IA</span></span></a><button class="icon-button sidebar-close" id="close-sidebar" aria-label="Fechar menu">×</button></div>
+      <button class="new-chat" id="new-chat"><span>＋</span> Nova conversa</button>
+      <div class="history-heading">RECENTES</div><div class="history-list" id="history-list"></div>
+      <div class="sidebar-bottom"><div class="connection-indicator" id="connection-status"><span class="status-dot"></span><span>IA não configurada</span></div><button class="settings-button" id="settings-button">⚙ <span>Configurações</span></button></div>
+    </aside>
+    <div class="mobile-scrim" id="mobile-scrim"></div>
+    <main class="main-panel">
+      <header class="topbar"><button class="icon-button menu-button" id="menu-button" aria-label="Abrir menu">☰</button><div class="topbar-title">WLC.IA <span class="model-pill">Assistente</span></div><button class="icon-button" id="clear-chat" title="Limpar conversa" aria-label="Limpar conversa">⌫</button></header>
+      <section class="conversation" id="conversation" aria-live="polite"><div class="welcome" id="welcome"><div class="welcome-logo">W</div><p class="eyebrow">Wlciav01</p><h1>Como posso ajudar?</h1><p class="welcome-copy">Agente ia</p><div class="suggestions"><button class="suggestion" data-prompt="Me ajude a organizar minhas ideias">Organize minhas ideias <span>↗</span></button><button class="suggestion" data-prompt="Explique um assunto de forma simples e completa">Explique algo <span>↗</span></button><button class="suggestion" data-prompt="Me ajude a criar um plano passo a passo">Crie um plano <span>↗</span></button><button class="suggestion" data-prompt="Revise este texto e sugira melhorias">Revise um texto <span>↗</span></button></div></div><div class="messages" id="messages"></div></section>
+      <footer class="composer-area"><form class="composer" id="composer"><textarea id="message-input" rows="1" placeholder="Envie uma mensagem para WLC.IA..." aria-label="Mensagem"></textarea><button class="send-button" id="send-button" type="submit" aria-label="Enviar mensagem">↑</button></form><p class="disclaimer">Verifique informações importantes. Use a inteligência local ou conecte um modelo externo nas configurações.</p></footer>
+    </main>
+  </div>
+  <dialog id="settings-dialog" class="settings-dialog"><form method="dialog"><button class="dialog-close" aria-label="Fechar">×</button></form><h2>Configuração da inteligência</h2><p>Conecte seu endpoint compatível. As mensagens só serão enviadas quando a conexão estiver configurada.</p><label for="endpoint-input">Endpoint de chat</label><input id="endpoint-input" type="url" placeholder="https://seu-servidor.example/api/chat"/><label for="token-input">Token (opcional)</label><input id="token-input" type="password" autocomplete="off" placeholder="Token de acesso"/><div class="dialog-actions"><button class="button-secondary" id="clear-settings" type="button">Remover conexão</button><button class="button-primary" id="save-settings" type="button">Salvar configuração</button></div><small>O token fica armazenado somente neste navegador. Evite configurar credenciais em dispositivos compartilhados.</small></dialog>
+  <script type="module" src="src/app.js"></script>
+</body>
+</html>
