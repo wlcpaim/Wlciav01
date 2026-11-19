@@ -1,0 +1,28 @@
+/* WLC.IA chat UI with local Intelligence Core and optional external AI endpoint. */
+import { localIntelligence } from "./intelligence.js";
+const STORAGE_KEY = "wlc-ia-chat-v1";
+const SETTINGS_KEY = "wlc-ia-settings-v1";
+const $ = (id) => document.getElementById(id);
+const state = { chats: [], activeId: null, settings: { endpoint: "", token: "" }, busy: false };
+const safe = (text) => String(text).replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const uid = () => crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2);
+function load(){try{state.chats=JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]");state.settings=JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{"endpoint":"","token":""}')}catch{state.chats=[];state.settings={endpoint:"",token:""}}}
+function save(){localStorage.setItem(STORAGE_KEY,JSON.stringify(state.chats));localStorage.setItem(SETTINGS_KEY,JSON.stringify(state.settings))}
+function active(){return state.chats.find(c=>c.id===state.activeId)}
+function newChat(){const c={id:uid(),title:"Nova conversa",messages:[],updatedAt:Date.now()};state.chats.unshift(c);state.activeId=c.id;save();render()}
+function renderHistory(){const host=$("history-list");host.innerHTML=state.chats.length?state.chats.map(c=>'<button class="history-item '+(c.id===state.activeId?'active':'')+'" data-chat="'+safe(c.id)+'" title="'+safe(c.title)+'"><span>◷</span><span>'+safe(c.title)+'</span></button>').join():'<div class="empty-history">Suas conversas aparecerão aqui.</div>';host.querySelectorAll("[data-chat]").forEach(b=>b.addEventListener("click",()=>{state.activeId=b.dataset.chat;render();closeSidebar()}))}
+function renderMessages(){const c=active(),host=$("messages"),welcome=$("welcome");welcome.hidden=!!(c&&c.messages.length);host.innerHTML=c?c.messages.map(m=>'<article class="message '+safe(m.role)+'"><div class="message-avatar">'+(m.role==="assistant"?"W":"•")+'</div><div class="message-content '+(m.error?"error":"")+'">'+safe(m.content)+'</div></article>').join():"";host.querySelectorAll(".message-content").forEach(el=>el.scrollIntoView({block:"nearest"}));$("conversation").scrollTop=$("conversation").scrollHeight}
+function render(){renderHistory();renderMessages();const connected=!!state.settings.endpoint;$("connection-status").innerHTML='<span class="status-dot '+(connected?"connected":"")+'"></span><span>'+(connected?"Endpoint externo configurado":"Inteligência local ativa")+'</span>';}
+function closeSidebar(){$("sidebar").classList.remove("open");$("mobile-scrim").classList.remove("show")}
+function openSettings(){$("endpoint-input").value=state.settings.endpoint||"";$("token-input").value=state.settings.token||"";$("settings-dialog").showModal()}
+function setBusy(v){state.busy=v;$("send-button").disabled=v}
+async function requestAI(messages){if(!state.settings.endpoint)return localIntelligence.reply(messages);const response=await fetch(state.settings.endpoint,{method:"POST",headers:{"Content-Type":"application/json",...(state.settings.token?{Authorization:"Bearer "+state.settings.token}:{})},body:JSON.stringify({messages,project:"WLC.IA",system:"Você é o WLC.IA. Seja honesto sobre suas limitações e não invente funcionalidades que ainda estão em desenvolvimento."})});if(!response.ok)throw new Error("Serviço de IA respondeu "+response.status+".");const data=await response.json();return data.reply??data.content??data.message??data.choices?.[0]?.message?.content??"Resposta recebida em formato não reconhecido."}
+async function send(text){const content=text.trim();if(!content||state.busy)return;if(!active())newChat();const c=active();c.messages.push({role:"user",content});if(c.messages.length===1)c.title=content.slice(0,48)+(content.length>48?"…":"");c.updatedAt=Date.now();save();render();setBusy(true);try{const reply=await requestAI(c.messages.map(({role,content})=>({role,content})));c.messages.push({role:"assistant",content:String(reply)});}catch(err){c.messages.push({role:"assistant",content:err.message||"Não foi possível conectar.",error:true})}finally{setBusy(false);c.updatedAt=Date.now();save();render()}}
+$("composer").addEventListener("submit",e=>{e.preventDefault();const input=$("message-input"),value=input.value;input.value="";input.style.height="auto";send(value)});
+$("message-input").addEventListener("input",e=>{e.target.style.height="auto";e.target.style.height=Math.min(e.target.scrollHeight,180)+"px"});
+$("message-input").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();$("composer").requestSubmit()}});
+$("new-chat").addEventListener("click",newChat);$("clear-chat").addEventListener("click",()=>{if(active()){active().messages=[];active().title="Nova conversa";save();render()}});
+$("menu-button").addEventListener("click",()=>{$("sidebar").classList.add("open");$("mobile-scrim").classList.add("show")});$("close-sidebar").addEventListener("click",closeSidebar);$("mobile-scrim").addEventListener("click",closeSidebar);
+$("settings-button").addEventListener("click",openSettings);$("save-settings").addEventListener("click",()=>{state.settings.endpoint=$("endpoint-input").value.trim();state.settings.token=$("token-input").value;save();$("settings-dialog").close();render()});$("clear-settings").addEventListener("click",()=>{state.settings={endpoint:"",token:""};save();$("endpoint-input").value="";$("token-input").value="";render()});
+document.querySelectorAll("[data-prompt]").forEach(b=>b.addEventListener("click",()=>send(b.dataset.prompt)));
+load();if(state.chats.length)state.activeId=state.chats[0].id;else newChat();render();
